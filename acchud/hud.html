@@ -1,0 +1,73 @@
+<html>
+    <head>        
+    </head>
+    <body>
+        <div id="app">
+            <div id="chart_div"></div>
+        </div>
+        <script src="https://unpkg.com/vue@3"></script>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        
+        <script>
+        google.charts.load('current', {packages: ['corechart', 'line']});
+
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    gas: [],
+                    idx: 0
+                };
+            },
+            mounted() {
+                setInterval(this.Update, 60);
+            },
+            methods: {
+                Update() {
+                    fetch("http://localhost:8080/api/physics")
+                    .then(res => {
+                        return res.json();
+                    })
+                    .then(json => {
+                        console.log(json);
+                        this.gas.push([this.idx, json.Gas, json.Brake, json.SteerAngle])
+                        this.idx++;
+                        if (this.gas.length >= 100) {
+                            this.gas.shift();
+                        }
+
+                        var data = new google.visualization.DataTable();
+                        data.addColumn('number', 'X');
+                        data.addColumn('number', 'Gas');
+                        data.addColumn('number', 'Brake');
+                        data.addColumn('number', 'SteerAngle');
+                    
+                        data.addRows(this.gas);
+                    
+                        var options = {
+                            hAxis: {
+                            title: 'Time'
+                            },
+                            vAxis: {
+                                title: 'Value',
+                                maxValue: 1,
+                                minValue: -1
+                            },
+                            
+                        };
+                    
+                        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+                        chart.draw(data, options);
+                        //this.registeredPlayers = json.map(player => player.name);
+                    });
+                }
+            }
+        }).mount("#app");
+
+
+
+
+
+        </script>
+    </body>
+</html>
